@@ -1,3 +1,5 @@
+## Overview
+
 This is an implementation of the expectation maximization (EM) algorithm for maximum-likelihood estimation of Gaussian mixture model parameter estimation. It supports data of arbitrary dimensions.
 It is based on the Eigen linear algebra library.
 
