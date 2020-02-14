@@ -2,7 +2,7 @@ This is an implementation of the expectation maximization (EM) algorithm for max
 It is based on the Eigen linear algebra library.
 
 ## Example Usage
-
+The below snippet initializes a Gaussian mixture model with 3 components in 2 dimensions, then optimizes the parameters for some random observations and reports the likelihood of a new observation given the learned model.
 ```c++
 GaussianMixture gmm(3, 2);
 Eigen::MatrixXd data = Eigen::MatrixXd::Random(50, 2);
