@@ -6,7 +6,9 @@
 #include "GaussianMixture.h"
 #include <random>
 
-GaussianMixture::GaussianMixture(int k, int d) : d_(d), k_(k), mu_(k, d), sigmas_(k, Eigen::MatrixXd(d, d)), log_pi_(k), normalizations_(k), cholesky_decompositions_(k) {
+GaussianMixture::GaussianMixture(int k, int d, double min_eigenvalue) :
+    d_(d), k_(k), mu_(k, d), sigmas_(k, Eigen::MatrixXd(d, d)),
+    log_pi_(k), normalizations_(k), cholesky_decompositions_(k), min_eigenvalue_(min_eigenvalue) {
 }
 
 GaussianMixture::GaussianMixture() : d_(0), k_(0) {
@@ -28,11 +30,11 @@ Eigen::MatrixXd GaussianMixture::means() const {
     return mu_;
 }
 
-std::vector<Eigen::MatrixXd> GaussianMixture::sigmas() const {
+const std::vector<Eigen::MatrixXd> &GaussianMixture::sigmas() const {
     return sigmas_;
 }
 
-Eigen::VectorXd GaussianMixture::log_probs() const {
+const Eigen::VectorXd &GaussianMixture::log_probs() const {
     return log_pi_;
 }
 
@@ -257,6 +259,16 @@ bool GaussianMixture::useCurrentModel() {
 
 bool GaussianMixture::recompute_normalizations() {
     for (int k = 0; k < k_; k++) {
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigs(sigmas_[k]);
+        Eigen::ArrayXd eigenvalues = eigs.eigenvalues();
+        for (int d=0; d<d_; d++) {
+            if (eigenvalues[d] < min_eigenvalue_) {
+                eigenvalues[d] = min_eigenvalue_;
+            } else {
+                break;
+            }
+        }
+        sigmas_[k] = (eigs.eigenvectors().array().rowwise() * eigenvalues.transpose()).matrix() * eigs.eigenvectors().transpose();
         cholesky_decompositions_[k] = sigmas_[k].ldlt();
         if (cholesky_decompositions_[k].info() == Eigen::NumericalIssue) {
             return false;
@@ -316,7 +328,7 @@ int GaussianMixture::learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int ma
         allocate(k_, data.cols());
     }
     if (!initialized_means_) {
-        if (!initialize_random_means(data)) {
+        if (initialize_k_means(data) == 0) {
             return 0;
         }
     }
@@ -402,6 +414,14 @@ std::ostream &operator<<(std::ostream &o, const GaussianMixture &gmm) {
     }
     o << "weights: " << std::endl << gmm.log_pi_.transpose().array().exp();
     return o;
+}
+
+double GaussianMixture::getMinEigenvalue() const {
+    return min_eigenvalue_;
+}
+
+void GaussianMixture::setMinEigenvalue(double min_eigenvalue) {
+    min_eigenvalue_ = min_eigenvalue;
 }
 
 

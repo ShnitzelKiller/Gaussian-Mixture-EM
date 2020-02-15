@@ -16,8 +16,9 @@ public:
     /**
      * @param k number of mixture components
      * @param d dimension of data
+     * @param min_eigenvalue minimum eigenvalue of the covariance matrix of any component during learning; larger is fatter
      */
-    GaussianMixture(int k, int d);
+    GaussianMixture(int k, int d, double min_eigenvalue=1e-6);
 
     /**
      * Provide initial values for parameters
@@ -84,6 +85,16 @@ public:
     int numDims() const;
 
     /**
+     * @return minimum allowed variance of components in this model along any direction
+     */
+    double getMinEigenvalue() const;
+
+    /**
+     * Set the minimum variance allowed by components during learning.
+     */
+     void setMinEigenvalue(double min_eigenvalue);
+
+    /**
      * @return (k, d) matrix, each row is that component's mean
      */
     Eigen::MatrixXd means() const;
@@ -91,12 +102,12 @@ public:
     /**
      * @return vector of (d, d) covariance matrices
      */
-    std::vector<Eigen::MatrixXd> sigmas() const;
+    const std::vector<Eigen::MatrixXd> &sigmas() const;
 
     /**
      * @return vector of k log probabilities of each component
      */
-    Eigen::VectorXd log_probs() const;
+    const Eigen::VectorXd &log_probs() const;
 
     /**
      * Returns true if the model is complete, i.e. learning succeeded without numerical issues (or model was manually set)
@@ -154,6 +165,7 @@ private:
     bool initialized_pis_ = false;
     bool complete_ = false;
     int d_, k_;
+    double min_eigenvalue_ = 1e-6;
     //parameters and cached derivative quantities
     Eigen::MatrixXd mu_;
     std::vector<Eigen::MatrixXd> sigmas_;
