@@ -1,5 +1,5 @@
 //
-// Created by James Noeckel on 1/27/20.
+// Adapted from user davidhigh's StackOverflow post at https://stackoverflow.com/questions/6142576/sample-from-multivariate-normal-gaussian-distribution-in-c
 //
 
 #include "NormalRandomVariable.h"
