@@ -3,7 +3,9 @@
 //
 
 #include "GaussianMixture.h"
-//#include <opencv2/opencv.hpp>
+#ifdef USE_OPENCV
+#include <opencv2/opencv.hpp>
+#endif
 #include <ctime>
 #include "NormalRandomVariable.h"
 #include <iostream>
@@ -12,21 +14,22 @@
 #define width 500
 #define height 500
 
-/*void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianMixture &gmm, const std::string &filename) {
+#ifdef USE_OPENCV
+void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianMixture &gmm, const std::string &filename) {
     cv::Mat mask = cv::Mat::zeros(height, width, CV_8UC3);
     Eigen::MatrixX2i coords(width * height, 2);
     for (int i = 0; i < width * height; i++) {
         coords(i, 0) = i / width;
         coords(i, 1) = i % width;
     }
-    Eigen::VectorXd total_log_likelihoods = gmm.getLogLikelihood(coords.cast<double>());
+    Eigen::VectorXd total_log_likelihoods = gmm.logp_data(coords.cast<double>());
     double max_log_likelihood = total_log_likelihoods.maxCoeff();
 
     for (int i = 0; i < width * height; i++) {
         auto color = static_cast<unsigned char>(255 * exp(total_log_likelihoods(i) - max_log_likelihood));
         mask.at<cv::Vec3b>(coords(i, 0), coords(i, 1)) = cv::Vec3b(color, color, color);
     }
-    Eigen::MatrixXd log_likelihoods = gmm.getLogLikelihoods(data);
+    Eigen::MatrixXd log_likelihoods = gmm.logp_z_given_data(data);
     for (int i = 0; i < data.rows(); i++) {
         int j;
         log_likelihoods.row(i).maxCoeff(&j);
@@ -44,7 +47,8 @@
         }
     }
     cv::imwrite(filename, mask);
-    }*/
+}
+#endif
 
 GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print_comparison) {
     GaussianMixture gmm;
@@ -137,7 +141,9 @@ int main(int argc, char **argv) {
         test_gmm(false, data, false);
         std::cout << "=======testing with kmeans=======" << std::endl;
         GaussianMixture gmm = test_gmm(true, data, true);
-        //display_gmm(data, gmm, "test_gmm_1.png");
+#ifdef USE_OPENCV
+        display_gmm(data, gmm, "test_gmm_1.png");
+#endif
     }
 
     {
@@ -156,7 +162,9 @@ int main(int argc, char **argv) {
             std::cout << "succeeded in " << iters << " iterations" << std::endl;
         }
         show_eigenvalues(gmm);
-        //display_gmm(data, gmm, "test_gmm_2.png");
+#ifdef USE_OPENCV
+        display_gmm(data, gmm, "test_gmm_2.png");
+#endif
     }
 
     {

@@ -41,7 +41,13 @@ make
 ```
 It is important to build in release mode, since Eigen is much slower in debug mode.
 
-   The test application generates 2D points in a plane according to a mixture of gaussians, then attempts to recover the mixture parameters from the observed samples. It also tests the numerical stability in the presence of thin subspaces and degenerate data. Below are the visualizations of typical test results (these can be obtained by uncommenting the code `test/test_gmm.cpp` and adding OpenCV as a dependency). Colored points are training data, colored by maximum component likelihood, and the shading is the likelihood of each pixel given the model.
+If you have OpenCV installed, you can enable rendering the results to images:
+```
+cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_OPENCV=on
+make
+```
+
+   The test application generates 2D points in a plane according to a mixture of gaussians, then attempts to recover the mixture parameters from the observed samples. It also tests the numerical stability in the presence of thin subspaces and degenerate data. Below are the visualizations of typical test results (these can be obtained by enabling the `USE_OPENCV` flag in the cmake options). Colored points are training data, colored by maximum component likelihood, and the shading is the likelihood of each pixel given the model.
 
 ### Visualization of parameter estimation:
 ![parameter recovery](test_gmm_1.png)
