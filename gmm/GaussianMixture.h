@@ -131,19 +131,29 @@ public:
      */
     int learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int maxiters=200, double eps=1e-3);
 
+
+    // In the below notation, z_i represents the random variable indicating which component generated data point x_i.
+
     /**
-     * Get the log likelihood of `data` for each component. Must have run learn() first.
+     * Get the log probability of `data` given each component. Must have run learn() first.
+     * @param data (n, d) matrix where each row is an observation
+     * @return (n, k) matrix where entry i,j is log(P(x_i|z_i=j,mu,sigma,pi)
+     */
+    Eigen::MatrixXd logp_data_given_z(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
+
+    /**
+     * Get the log probability of each component being responsible for each point in `data`. Must have run learn() first.
      * @param data (n, d) matrix where each row is an observation
      * @return log likelihoods as (n, k) matrix where entry i,j is log(P(z_i=j|x_i,mu,sigma,pi))
      */
-    Eigen::MatrixXd getLogLikelihoods(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
+    Eigen::MatrixXd logp_z_given_data(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
 
     /**
      * Get the log likelihood of `data` given the model. Must have run learn() first.
      * @param data (n, d) matrix where each row is an observation
      * @return log likelihood as a length n vector where entry i is log(P(X_i|mu,sigma,pi))
      */
-    Eigen::VectorXd getLogLikelihood(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
+    Eigen::VectorXd logp_data(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
 
 private:
     /**
@@ -152,12 +162,17 @@ private:
      * @param d
      */
     void allocate(int k, int d);
+
+    /**
+     * Enforce minimum covariance eigenvalues, recompute colesky factorizations of covariance matrices
+     * @return true if no numerical issues occurred in factorization
+     */
     bool recompute_normalizations();
+
     /**
      * Execute one step of EM, return the log likelihood given `data` and parameters
      */
     double step(const Eigen::Ref<const Eigen::MatrixXd> &data, bool &success);
-    Eigen::MatrixXd getIndividualLogLikelihoods(const Eigen::Ref<const Eigen::MatrixXd> &data) const;
 
     // fields and parameters
     bool initialized_means_ = false;

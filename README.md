@@ -15,7 +15,7 @@ std::cout << "took " << iters << " iterations" << std::endl;
 std::cout << "-------- parameters --------" << std::endl << gmm << std::endl;
 
 Eigen::RowVector2d point(0, 0);
-std::cout << "log likelihood at point " << point << ": " << gmm.getLogLikelihood(point) << std::endl;
+std::cout << "log likelihood at point " << point << ": " << gmm.logp_data(point) << std::endl;
 ```
 
 The below example shows how to manually set the parameters of the model and use it as a likelihood function:
@@ -27,8 +27,9 @@ Eigen::Matrix<double, 1, 2> mean(1, -1);
 gmm.initialize(mean, cov_default, pi);
 gmm.useCurrentModel();
 Eigen::RowVector2d point(0, 0);
-std::cout << "log likelihood at point " << point << ": " << gmm.getLogLikelihood(point) << std::endl;
+std::cout << "log likelihood at point " << point << ": " << gmm.logp_data(point) << std::endl;
 ```
+See `gmm/GaussianMixture.h" for more detailed documentation on all the functions.
 
 # Building instructions
 To build the example tests, navigate to the root directory, and run

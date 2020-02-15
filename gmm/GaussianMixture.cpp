@@ -374,7 +374,7 @@ int GaussianMixture::learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int ma
     return iter;
 }
 
-Eigen::MatrixXd GaussianMixture::getIndividualLogLikelihoods(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
+Eigen::MatrixXd GaussianMixture::logp_data_given_z(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
     int n = data.rows();
     Eigen::MatrixXd log_likelihoods(n, k_);
     for (int k=0; k<k_; k++) {
@@ -384,23 +384,23 @@ Eigen::MatrixXd GaussianMixture::getIndividualLogLikelihoods(const Eigen::Ref<co
     return log_likelihoods;
 }
 
-Eigen::MatrixXd GaussianMixture::getLogLikelihoods(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
+Eigen::MatrixXd GaussianMixture::logp_z_given_data(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
     int n = data.rows();
     if (!complete_ || data.cols() != d_) {
         return Eigen::MatrixXd::Constant(n, k_, std::numeric_limits<double>::lowest());
     }
-    Eigen::MatrixXd log_likelihoods = getIndividualLogLikelihoods(data);
+    Eigen::MatrixXd log_likelihoods = logp_data_given_z(data);
     log_likelihoods.colwise() -= log_likelihoods.rowwise().maxCoeff();
     log_likelihoods.colwise() -= log_likelihoods.array().exp().rowwise().sum().log().matrix();
     return log_likelihoods;
 }
 
-Eigen::VectorXd GaussianMixture::getLogLikelihood(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
+Eigen::VectorXd GaussianMixture::logp_data(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
     int n = data.rows();
     if (!complete_ || data.cols() != d_) {
         return Eigen::VectorXd::Constant(n, std::numeric_limits<double>::lowest());
     }
-    Eigen::MatrixXd log_likelihoods = getIndividualLogLikelihoods(data);
+    Eigen::MatrixXd log_likelihoods = logp_data_given_z(data);
     Eigen::VectorXd max_log_likelihoods = log_likelihoods.rowwise().maxCoeff();
     log_likelihoods.colwise() -= max_log_likelihoods;
     return log_likelihoods.array().exp().rowwise().sum().log() + max_log_likelihoods.array();
