@@ -36,12 +36,31 @@ public:
     bool initialize(const Eigen::Ref<const Eigen::MatrixXd> &means);
 
     /**
+     * Simple initialization by selecting random (non-repeating) elements from the given data
+     * @param data nxd matrix with observations as rows
+     * @param num_components if not already set, specify number of components
+     * @return true if initialization was successful
+     */
+    bool initialize_random_means(const Eigen::Ref<const Eigen::MatrixXd> &data, int num_components=-1);
+
+    /**
      * Initialize evenly distributed means in the specified range, with sigmas based on the range.
      * @param lower_bound minimum value of each component of the means
      * @param upper_bound maximum value of each component of the means
+     * @param initialize_sigmas whether to set the covariances to a default value based on point density in the volume
      * @param components if not already set, specify number of components
+     * @return true if initialization was successful
      */
-    bool initialize(const Eigen::Ref<const Eigen::VectorXd> &lower_bound, const Eigen::Ref<const Eigen::VectorXd> &upper_bound, int components=-1);
+    bool initialize_volume(const Eigen::Ref<const Eigen::VectorXd> &lower_bound, const Eigen::Ref<const Eigen::VectorXd> &upper_bound, bool initialize_sigmas=false, int components=-1);
+
+    /**
+     * Initialize using k-means clustering. Can separately initialize the means using one of the overloaded initialize() functions.
+     * If initialization fails, resulting means are invalid (including previously initialized means)
+     * @param data data to use for k-means clustering (presumably also the data you will use with learn())
+     * @param num_components if not already set, specify number of components
+     * @return number of iterations taken, or 0 if failed
+     */
+    int initialize_k_means(const Eigen::Ref<const Eigen::MatrixXd> &data, int num_components=-1, int max_iters=1000);
 
     /**
      * Set parameters to uninitialized, so that the next call to learn() will randomly initialize
