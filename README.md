@@ -20,11 +20,12 @@ std::cout << "log likelihood at point " << point << ": " << gmm.getLogLikelihood
 
 The below example shows how to manually set the parameters of the model and use it as a likelihood function:
 ```c++
+GaussianMixture gmm;
 std::vector<Eigen::MatrixXd> cov_default(1, Eigen::MatrixXd::Identity(3, 3));
 Eigen::Matrix<double, 1, 1> pi(1);
 Eigen::Matrix<double, 1, 2> mean(1, -1);
-gmms[i].initialize(mean, cov_default, pi);
-gmms[i].useCurrentModel();
+gmm.initialize(mean, cov_default, pi);
+gmm.useCurrentModel();
 Eigen::RowVector2d point(0, 0);
 std::cout << "log likelihood at point " << point << ": " << gmm.getLogLikelihood(point) << std::endl;
 ```
