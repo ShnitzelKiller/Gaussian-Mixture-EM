@@ -121,9 +121,9 @@ public:
     bool useCurrentModel();
 
     /**
-     * Learn the parameters of the mixture model from the given data. The first call will use random initialization,
-     * and subsequent calls will optimize for the likelihood of data starting from the existing parameters. Note that if
-     * appending new data is desired, previous data must still be included in `data`.
+     * Learn the parameters of the mixture model from the given data. The first call will use k-means initialization (if
+     * the model has not been initialized), and subsequent calls will optimize for the likelihood of data starting from
+     * the existing parameters. Note that if appending new data is desired, previous data must still be included in `data`.
      * @param data N x D matrix, where N is the number of observations and D is the dimension
      * @param maxiters maximum number of iterations
      * @param eps minimum change in log likelihood to continue iterating
