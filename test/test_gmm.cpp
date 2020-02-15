@@ -129,7 +129,6 @@ void show_eigenvalues(const GaussianMixture &gmm) {
 
 int main(int argc, char **argv) {
     auto seed = (unsigned int) time(nullptr);
-    //unsigned int seed = 1579761920;
     std::cout << "seed: " << seed << std::endl;
     srand(seed);
     {
