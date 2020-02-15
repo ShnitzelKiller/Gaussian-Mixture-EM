@@ -36,8 +36,9 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
 It is important to build in release mode, since Eigen is much slower in debug mode. The test generates 2D points in a plane according to a mixture of gaussians, then attempts to recover the mixture parameters from the observed samples. It also tests the numerical stability in the presence of thin subspaces and degenerate data. Below are the visualizations of typical test results (these can be obtained by uncommenting the code `test/test_gmm.cpp` and adding OpenCV as a dependency).
-Visualization of parameter estimation:
+
+### Visualization of parameter estimation:
 ![parameter recovery](test_gmm_1.png)
 
-Visualization of result with thin subspaces:
+### Visualization of result with thin subspaces:
 ![surviving edged subspaces](test_gmm_2.png)
