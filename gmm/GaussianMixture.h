@@ -129,7 +129,7 @@ public:
      * @param eps minimum change in log likelihood to continue iterating
      * @return number of iterations taken
      */
-    int learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int maxiters=200, double eps=1e-3);
+    int learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int maxiters=200, double eps=1e-6);
 
 
     // In the below notation, z_i represents the random variable indicating which component generated data point x_i.

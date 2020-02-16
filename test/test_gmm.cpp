@@ -42,15 +42,6 @@ void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianM
         log_likelihoods.row(i).maxCoeff(&j);
         cv::Point2i point(static_cast<int>(data(i, 1)), static_cast<int>(data(i, 0)));
         if (point.x >= 0 && point.x < width && point.y >= 0 && point.y < height) {
-            /*if (j == 0) {
-                mask.at<cv::Vec3b>(point) = cv::Vec3b(255, 0, 255);
-            } else if (j == 1) {
-                mask.at<cv::Vec3b>(point) = cv::Vec3b(0, 255, 255);
-            } else if (j == 2) {
-                mask.at<cv::Vec3b>(point) = cv::Vec3b(0, 0, 255);
-            } else {
-                mask.at<cv::Vec3b>(point) = cv::Vec3b(255, 255, 0);
-            }*/
             mask.at<cv::Vec3b>(point) = cv::Vec3b(colors(j, 0), colors(j, 1), colors(j, 2));
         }
     }
@@ -108,7 +99,7 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
             gmm.initialize_random_means(data);
         }
         auto start_t = clock();
-        int iters = gmm.learn(data, 200);
+        int iters = gmm.learn(data);
         total_iters += iters;
         auto total_t = clock() - start_t;
         float time_sec = static_cast<float>(total_t) / CLOCKS_PER_SEC;
@@ -122,16 +113,33 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
     std::cout << "average iters: " << static_cast<float>(total_iters) / static_cast<float>(NUM_TRIALS) << std::endl;
     std::cout << "total successes: " << total_successes << '/' << NUM_TRIALS << std::endl;
     if (print_comparison) {
-        std::cout << "---- parameter comparison ----" << std::endl
-                  << "means:            ground truth (not in same order):" << std::endl;
-        for (int i = 0; i < k; i++) {
-            std::cout << '[' << gmm.means().row(i) << "] -------- [" << means.row(i) << ']' << std::endl;
+        std::vector<int> closest(k);
+        std::vector<bool> chosen(k, false);
+        for (int i=0; i<k; i++) {
+            int ind = -1;
+            double mindist = std::numeric_limits<double>::max();
+            for (int j=0; j<k; j++) {
+                if (!chosen[j]) {
+                    double d2 = (gmm.means().row(i) - means.row(j)).squaredNorm();
+                    if (d2 < mindist) {
+                        ind = j;
+                        mindist = d2;
+                    }
+                }
+            }
+            closest[i] = ind;
+            chosen[ind] = true;
         }
-        std::cout << "covariances:      ground truth (not in same order):" << std::endl;
+        std::cout << "---- parameter comparison ----" << std::endl
+                  << "means:                     ground truth:" << std::endl;
+        for (int i = 0; i < k; i++) {
+            std::cout << '[' << gmm.means().row(i) << "] -------- [" << means.row(closest[i]) << ']' << std::endl;
+        }
+        std::cout << "covariances:               ground truth:" << std::endl;
         std::cout << "------------------------------------" << std::endl;
         for (int i = 0; i < k; i++) {
             for (int j = 0; j < 2; j++) {
-                std::cout << '|' << gmm.sigmas()[i].row(j) << "| -------- |" << sigmas[i].row(j) << '|' << std::endl;
+                std::cout << '|' << gmm.sigmas()[i].row(j) << "| -------- |" << sigmas[closest[i]].row(j) << '|' << std::endl;
             }
             std::cout << "------------------------------------" << std::endl;
         }
