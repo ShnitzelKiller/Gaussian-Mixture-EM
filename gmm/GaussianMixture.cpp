@@ -376,6 +376,9 @@ int GaussianMixture::learn(const Eigen::Ref<const Eigen::MatrixXd> &data, int ma
 
 Eigen::MatrixXd GaussianMixture::logp_data_given_z(const Eigen::Ref<const Eigen::MatrixXd> &data) const {
     int n = data.rows();
+    if (!complete_ || data.cols() != d_) {
+        return Eigen::MatrixXd::Constant(n, k_, std::numeric_limits<double>::lowest());
+    }
     Eigen::MatrixXd log_likelihoods(n, k_);
     for (int k=0; k<k_; k++) {
         Eigen::MatrixXd centered = data.rowwise() - mu_.row(k);
