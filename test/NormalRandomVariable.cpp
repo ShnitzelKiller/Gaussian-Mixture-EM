@@ -3,7 +3,7 @@
 //
 
 #include "NormalRandomVariable.h"
-
+#include <random>
 
 NormalRandomVariable::NormalRandomVariable(Eigen::Ref<const Eigen::MatrixXd> const &covar)
         : NormalRandomVariable(Eigen::VectorXd::Zero(covar.rows()), covar)

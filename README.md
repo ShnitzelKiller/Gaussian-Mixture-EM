@@ -31,7 +31,7 @@ std::cout << "log likelihood at point " << point << ": " << gmm.logp_data(point)
 ```
 See `gmm/GaussianMixture.h" for more detailed documentation on all the functions.
 
-# Building instructions
+# Building and running the tests
 To build the example tests, navigate to the root directory, and run
 ```
 mkdir build
@@ -46,6 +46,11 @@ If you have OpenCV installed, you can enable rendering the results to images:
 cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_OPENCV=on
 make
 ```
+Run the tests with
+```
+./GMMTests [num_comps]
+```
+where `num_comps` is the number of components to generate and attempt to recover the parameters for.
 
    The test application generates 2D points in a plane according to a mixture of gaussians, then attempts to recover the mixture parameters from the observed samples. It also tests the numerical stability in the presence of thin subspaces and degenerate data. Below are the visualizations of typical test results (these can be obtained by enabling the `USE_OPENCV` flag in the cmake options). Colored points are training data, colored by maximum component likelihood, and the shading is the likelihood of each pixel given the model.
 

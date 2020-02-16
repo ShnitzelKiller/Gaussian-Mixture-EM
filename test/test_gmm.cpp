@@ -3,19 +3,26 @@
 //
 
 #include "GaussianMixture.h"
-#ifdef USE_OPENCV
-#include <opencv2/opencv.hpp>
-#endif
 #include <ctime>
 #include "NormalRandomVariable.h"
+#include <random>
+#include "hsv2rgb.hpp"
 #include <iostream>
 
-#define trials 100
-#define width 500
-#define height 500
-
 #ifdef USE_OPENCV
-void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianMixture &gmm, const std::string &filename) {
+#include <opencv2/opencv.hpp>
+
+void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianMixture &gmm, const std::string &filename, std::mt19937 &gen, int width, int height) {
+    int k = gmm.numComponents();
+    //std::uniform_real_distribution<double> hue_dist(0, 360);
+    //std::uniform_real_distribution<double> sv_dist(0.5, 1);
+    Eigen::MatrixX3d colors(k, 3);
+    for (int i=0; i<k; i++) {
+        double r, g, b;
+        hsv2rgb<double>((360*i)/static_cast<double>(k), 1.0, 1.0, r, g, b);
+        colors.row(i) = 255 * Eigen::RowVector3d(r, g, b);
+    }
+
     cv::Mat mask = cv::Mat::zeros(height, width, CV_8UC3);
     Eigen::MatrixX2i coords(width * height, 2);
     for (int i = 0; i < width * height; i++) {
@@ -35,7 +42,7 @@ void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianM
         log_likelihoods.row(i).maxCoeff(&j);
         cv::Point2i point(static_cast<int>(data(i, 1)), static_cast<int>(data(i, 0)));
         if (point.x >= 0 && point.x < width && point.y >= 0 && point.y < height) {
-            if (j == 0) {
+            /*if (j == 0) {
                 mask.at<cv::Vec3b>(point) = cv::Vec3b(255, 0, 255);
             } else if (j == 1) {
                 mask.at<cv::Vec3b>(point) = cv::Vec3b(0, 255, 255);
@@ -43,39 +50,50 @@ void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianM
                 mask.at<cv::Vec3b>(point) = cv::Vec3b(0, 0, 255);
             } else {
                 mask.at<cv::Vec3b>(point) = cv::Vec3b(255, 255, 0);
-            }
+            }*/
+            mask.at<cv::Vec3b>(point) = cv::Vec3b(colors(j, 0), colors(j, 1), colors(j, 2));
         }
     }
     cv::imwrite(filename, mask);
 }
 #endif
 
-GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print_comparison) {
+#define NUM_TRIALS 10
+#define IMAGE_WIDTH 500
+#define IMAGE_HEIGHT 500
+
+GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print_comparison, std::mt19937 &gen, int k=4) {
+    std::uniform_real_distribution<double> pos_dist(static_cast<double>(IMAGE_WIDTH) / 8, static_cast<double>(IMAGE_WIDTH) * (7.0 / 8.0));
+    std::uniform_real_distribution<double> var_dist(10, 4000);
+    std::uniform_real_distribution<double> angdist(0, M_PI_4);
     GaussianMixture gmm;
-    int k = 4;
     gmm.setComponents(k);
     int n = 2000;
     std::cout << "generating data..." << std::endl;
 
     Eigen::MatrixX2d data(n, 2);
     Eigen::MatrixX2d means(k, 2);
-    means << 250, 250,
-             100, 250,
-             250, 100,
-             400, 400;
-    std::vector<Eigen::Matrix2d> sigmas{
-            (Eigen::Matrix2d() << 1000, 500, 500, 750).finished(),
-            Eigen::Matrix2d::Identity() * (50 * 50),
-            (Eigen::Matrix2d() << 500, 0, 0, 250).finished(),
-            (Eigen::Matrix2d() << 500, 0, 0, 500).finished()
-    };
+    for (int i=0; i<k; i++) {
+        means.row(i) = Eigen::RowVector2d(pos_dist(gen), pos_dist(gen));
+    }
+
+    std::vector<Eigen::Matrix2d> sigmas(k);
+    for (int i=0; i<k; i++) {
+        Eigen::Array2d eigenvalues(var_dist(gen), var_dist(gen));
+        double angle = angdist(gen);
+        Eigen::Matrix2d rot;
+        rot << cos(angle), -sin(angle),
+               sin(angle), cos(angle);
+        sigmas[i] = (rot.array().rowwise() * eigenvalues.transpose()).matrix() * rot.transpose();
+    }
     std::vector<NormalRandomVariable> randvs;
     randvs.reserve(k);
     for (int i=0; i<k; i++) {
         randvs.emplace_back(means.row(i).transpose(), sigmas[i]);
     }
+    std::uniform_int_distribution<int> cluster_dist(0, k-1);
     for (int i = 0; i < n; i++) {
-        int cluster = std::rand() % k;
+        int cluster = cluster_dist(gen);
         data.row(i) = randvs[cluster]().transpose();
     }
     std::cout << "generated data " << std::endl;
@@ -84,8 +102,7 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
     float time_avg = 0.0f;
     int total_iters = 0;
     int total_successes = 0;
-    bool warning_printed = false;
-    for (int i = 0; i < trials; i++) {
+    for (int i = 0; i < NUM_TRIALS; i++) {
         gmm.clear();
         if (!use_kmeans) {
             gmm.initialize_random_means(data);
@@ -100,10 +117,10 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
             total_successes += 1;
         }
     }
-    time_avg /= trials;
+    time_avg /= NUM_TRIALS;
     std::cout << "average time: " << time_avg << std::endl;
-    std::cout << "average iters: " << total_iters / static_cast<float>(trials) << std::endl;
-    std::cout << "total successes: " << total_successes << '/' << trials << std::endl;
+    std::cout << "average iters: " << static_cast<float>(total_iters) / static_cast<float>(NUM_TRIALS) << std::endl;
+    std::cout << "total successes: " << total_successes << '/' << NUM_TRIALS << std::endl;
     if (print_comparison) {
         std::cout << "---- parameter comparison ----" << std::endl
                   << "means:            ground truth (not in same order):" << std::endl;
@@ -132,17 +149,28 @@ void show_eigenvalues(const GaussianMixture &gmm) {
 }
 
 int main(int argc, char **argv) {
+    int k = 4;
+    if (argc > 1) {
+        try {
+            k = std::stoi(argv[1]);
+        } catch (std::invalid_argument &e) {
+            std::cout << "usage: " << argv[0] << " [num_components]" << std::endl;
+            return 1;
+        }
+    }
     auto seed = (unsigned int) time(nullptr);
-    std::cout << "seed: " << seed << std::endl;
     srand(seed);
+    std::mt19937 gen(std::random_device{}());
+    //unsigned int seed = 1579761920;
+    std::cout << "seed: " << seed << std::endl;
     {
         std::cout << "=======testing without kmeans=======" << std::endl;
         Eigen::MatrixX2d data;
-        test_gmm(false, data, false);
+        test_gmm(false, data, false, gen, k);
         std::cout << "=======testing with kmeans=======" << std::endl;
-        GaussianMixture gmm = test_gmm(true, data, true);
+        GaussianMixture gmm = test_gmm(true, data, true, gen, k);
 #ifdef USE_OPENCV
-        display_gmm(data, gmm, "test_gmm_1.png");
+        display_gmm(data, gmm, "test_gmm_1.png", gen, IMAGE_WIDTH, IMAGE_HEIGHT);
 #endif
     }
 
@@ -152,7 +180,7 @@ int main(int argc, char **argv) {
         Eigen::MatrixX2d data(20, 2);
         for (int i=0; i<10; i++) {
             data.row(i) = Eigen::RowVector2d(200+i*10, 200+i*15);
-            data.row(i+10) = Eigen::RowVector2d(500-i*30, 200 + i*10);
+            data.row(i+10) = Eigen::RowVector2d(IMAGE_WIDTH-i*30, 200 + i*10);
         }
         int iters = gmm.learn(data);
         if (!gmm.success()) {
@@ -163,7 +191,7 @@ int main(int argc, char **argv) {
         }
         show_eigenvalues(gmm);
 #ifdef USE_OPENCV
-        display_gmm(data, gmm, "test_gmm_2.png");
+        display_gmm(data, gmm, "test_gmm_2.png", gen, IMAGE_WIDTH, IMAGE_HEIGHT);
 #endif
     }
 
