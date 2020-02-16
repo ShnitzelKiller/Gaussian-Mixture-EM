@@ -13,7 +13,7 @@
 #include <opencv2/opencv.hpp>
 
 void display_gmm(const Eigen::Ref<const Eigen::MatrixX2d> &data, const GaussianMixture &gmm, const std::string &filename, std::mt19937 &gen, int width, int height) {
-    int k = gmm.numComponents();
+    int k = gmm.getNumComponents();
     //std::uniform_real_distribution<double> hue_dist(0, 360);
     //std::uniform_real_distribution<double> sv_dist(0.5, 1);
     Eigen::MatrixX3d colors(k, 3);
@@ -67,7 +67,7 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
     std::uniform_real_distribution<double> var_dist(10, 4000);
     std::uniform_real_distribution<double> angdist(0, M_PI_4);
     GaussianMixture gmm;
-    gmm.setComponents(k);
+    gmm.setNumComponents(k);
     int n = 2000;
     std::cout << "generating data..." << std::endl;
 
@@ -141,7 +141,7 @@ GaussianMixture test_gmm(bool use_kmeans, Eigen::MatrixX2d &out_data, bool print
 }
 
 void show_eigenvalues(const GaussianMixture &gmm) {
-    for (int i=0; i<gmm.numComponents(); i++) {
+    for (int i=0; i<gmm.getNumComponents(); i++) {
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eig(gmm.sigmas()[i]);
         std::cout << "eigenvalues for cluster " << i << ": [" << eig.eigenvalues().transpose() << "]; mean: [" << gmm.means().row(i) << ']' << std::endl;
         std::cout << "eigenvectors:\n" << eig.eigenvectors() << std::endl;

@@ -14,19 +14,21 @@ GaussianMixture::GaussianMixture(int k, int d, double min_eigenvalue) :
 GaussianMixture::GaussianMixture() : d_(0), k_(0) {
 }
 
-void GaussianMixture::setComponents(int k) {
+void GaussianMixture::setNumComponents(int k) {
     k_ = k;
+    d_ = 0;
+    clear();
 }
 
-int GaussianMixture::numComponents() const {
+int GaussianMixture::getNumComponents() const {
     return k_;
 }
 
-int GaussianMixture::numDims() const {
+int GaussianMixture::getNumDims() const {
     return d_;
 }
 
-Eigen::MatrixXd GaussianMixture::means() const {
+const Eigen::MatrixXd &GaussianMixture::means() const {
     return mu_;
 }
 
@@ -46,10 +48,7 @@ void GaussianMixture::allocate(int k, int d) {
     normalizations_.resize(k_);
     mu_.resize(k_, d_);
     log_pi_.resize(k_);
-    initialized_means_ = false;
-    initialized_pis_ = false;
-    initialized_sigmas_ = false;
-    complete_ = false;
+    clear();
 }
 
 bool GaussianMixture::initialize_random_means(const Eigen::Ref<const Eigen::MatrixXd> &data, int num_components) {

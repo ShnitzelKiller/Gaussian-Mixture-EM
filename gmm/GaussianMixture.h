@@ -9,7 +9,7 @@
 class GaussianMixture {
 public:
     /**
-     * Construct empty GMM model; must call setComponents() or initialize() before calling learn()
+     * Construct empty GMM model; must call setNumComponents() or initialize() before calling learn()
      */
     GaussianMixture();
 
@@ -72,17 +72,17 @@ public:
      * Sets the number of components of the model
      * @param k > 0
      */
-    void setComponents(int k);
+    void setNumComponents(int k);
 
     /**
      * @return number of components k
      */
-    int numComponents() const;
+    int getNumComponents() const;
 
     /**
      * @return number of dimensions d
      */
-    int numDims() const;
+    int getNumDims() const;
 
     /**
      * @return minimum allowed variance of components in this model along any direction
@@ -97,7 +97,7 @@ public:
     /**
      * @return (k, d) matrix, each row is that component's mean
      */
-    Eigen::MatrixXd means() const;
+    const Eigen::MatrixXd &means() const;
 
     /**
      * @return vector of (d, d) covariance matrices
